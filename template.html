@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>粮喂多了 · 猫狗每天吃多少克、几罐、要减多久</title>
+<meta name="description" content="按体重、体况评分和粮的热量密度，算出猫狗每天该喂多少克干粮、几个罐头，几套喂法并排对照月花费，再排出到目标体重的周数。">
+<style>
+:root{
+  --ink:#1f2e28; --ink2:#49584f; --ink3:#7c8a82; --line:#dbe2db;
+  --paper:#f5f2ea; --card:#fffefb; --green:#1f6b4a; --green-d:#154c34; --amber:#a2610c;
+  --warnbg:#fdf5e8; --warnline:#eed9b4; --errbg:#fdeeee; --errline:#e7bcbc;
+  --okbg:#eef6f0; --okline:#c6e0d0; --rad:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font:15px/1.62 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:18px 14px 64px}
+header.top{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:14px}
+h1{font-size:23px;line-height:1.3;margin:0 0 6px}
+.sub{color:var(--ink2);font-size:13.5px}
+.sub b{color:var(--green-d)}
+.tagline{margin-top:7px;font-size:12.5px;color:var(--ink3)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:14px;min-width:0}
+.card+.card{margin-top:12px}
+.card h2{font-size:14px;margin:0 0 10px;letter-spacing:.4px;color:var(--ink2);font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2 .n{display:inline-flex;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;align-items:center;justify-content:center;flex:0 0 auto}
+.card h2 .tag{margin-left:auto;font-weight:400;font-size:12px;color:var(--ink3)}
+.grid{display:grid;gap:12px}
+.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.field{margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12.5px;color:var(--ink2);margin-bottom:4px}
+.field .hint{font-size:11.5px;color:var(--ink3);margin-top:3px;line-height:1.45}
+input[type=number],input[type=text],select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:14px;background:#fff;color:var(--ink);min-width:0}
+input:focus,select:focus{outline:2px solid #1f6b4a33;border-color:var(--green)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hidden{display:none !important}
+.btnrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+button{font:inherit;font-size:13px;padding:7px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--green);color:var(--green-d)}
+button.primary{background:var(--green);border-color:var(--green);color:#fff}
+button.primary:hover{background:var(--green-d);color:#fff}
+button.sm{font-size:12px;padding:5px 9px}
+.msg{border-radius:8px;padding:9px 11px;margin-bottom:11px;font-size:13px}
+.msg.err{background:var(--errbg);border:1px solid var(--errline);color:#8d1f1f}
+.msg.warn{background:var(--warnbg);border:1px solid var(--warnline);color:#7a4606}
+.msg ul{margin:5px 0 0;padding-left:18px}
+/* 结论条 */
+#conclusion{background:linear-gradient(180deg,#fffefb,#f7faf7);border:1px solid var(--line);border-left:4px solid var(--green)}
+.concl-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+.big{font-size:15px;color:var(--ink2)}
+.big b{display:block;font-size:31px;line-height:1.2;color:var(--green-d);letter-spacing:.5px;margin:2px 0 4px;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:#f1f5f1;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;color:var(--ink2)}
+.chip b{color:var(--ink)}
+.concl-side{font-size:13px;color:var(--ink2);border-left:1px dashed var(--line);padding-left:13px}
+.concl-side p{margin:0 0 6px}
+/* 对照表 */
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.plan{width:100%;border-collapse:collapse;font-size:13px}
+table.plan th,table.plan td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:right;vertical-align:top}
+table.plan th:first-child,table.plan td:first-child{text-align:left}
+table.plan thead th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap}
+table.plan tr.pick td{background:#f4f9f5}
+table.plan td.name{font-weight:600;white-space:nowrap}
+table.plan td.num{font-variant-numeric:tabular-nums}
+table.plan td.note{text-align:left;color:var(--ink3);font-size:12px;min-width:150px;max-width:250px}
+table.plan .adopt{margin-top:5px}
+.badge{display:inline-block;font-size:11px;border-radius:5px;padding:1px 6px;background:var(--okbg);border:1px solid var(--okline);color:var(--green-d);margin-left:6px}
+/* 非法输入时：结论条别留一排「—」，直接一句话说清 */
+#conclusion.invalid .chips,#conclusion.invalid .concl-side,#conclusion.invalid #out-mealsnote{display:none}
+#conclusion.invalid .big b{font-size:19px;line-height:1.45;color:#8d1f1f;font-weight:600}
+/* 时间线 */
+table.tl{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+table.tl th:first-child,table.tl td:first-child{width:36%}
+table.tl th:nth-child(2),table.tl td:nth-child(2){width:31%}
+table.tl th:nth-child(3),table.tl td:nth-child(3){width:33%}
+table.tl th,table.tl td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+table.tl th:first-child,table.tl td:first-child{text-align:left}
+table.tl thead th{font-size:12px;color:var(--ink3);font-weight:600}
+/* 自检 */
+ul.checks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;font-size:12.5px}
+ul.checks li{display:flex;gap:6px;align-items:flex-start;color:var(--ink2);min-width:0}
+ul.checks li .m{flex:0 0 auto;font-weight:700}
+ul.checks li.ok .m{color:var(--green)}
+ul.checks li.no{color:#8d1f1f}
+ul.checks li.no .m{color:#b42318}
+/* 键值行 */
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;font-size:13px}
+.kv dt{color:var(--ink3)}
+.kv dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.note-list{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink2)}
+.note-list li{margin-bottom:3px}
+details{border:1px dashed var(--line);border-radius:8px;padding:8px 11px;margin-top:10px;font-size:13px;color:var(--ink2)}
+details summary{cursor:pointer;color:var(--ink2);font-weight:600}
+details p,details li{font-size:12.5px;line-height:1.55}
+footer{margin-top:20px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+@media (max-width:860px){
+  .cols-3{grid-template-columns:1fr}
+  .concl-main{grid-template-columns:1fr}
+  .concl-side{border-left:0;border-top:1px dashed var(--line);padding-left:0;padding-top:10px}
+  ul.checks{grid-template-columns:1fr}
+}
+@media (max-width:700px){
+  .cols-2{grid-template-columns:1fr}
+  /* 窄屏：对照表改成一条条卡片，避免横向溢出 */
+  table.plan,table.plan tbody,table.plan tr,table.plan td{display:block;width:auto}
+  table.plan thead{display:none}
+  table.plan tr{border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:9px;background:#fff}
+  table.plan tr.pick{background:#f4f9f5}
+  table.plan td{border:0;padding:3px 0;text-align:left;display:flex;justify-content:space-between;gap:10px}
+  table.plan td::before{content:attr(data-l);color:var(--ink3);font-size:12px;flex:0 0 auto}
+  table.plan td.name{font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:3px}
+  table.plan td.name::before{content:""}
+  table.plan td.note{max-width:none;display:block}
+  table.plan td.note::before{content:attr(data-l);display:block;margin-bottom:2px}
+  table.tl{font-size:12.5px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>粮喂多了</h1>
+    <p class="sub">按体重、体况评分和你家粮的<b>热量密度</b>，算出每天该喂多少克、几个罐头；四套喂法并排看月花费，再排到目标体重要多少周。</p>
+    <p class="tagline">不联网、不认牌子、不评价粮的好坏；默认数据是虚构示例，换成你家粮包装上的数字更准。</p>
+  </header>
+
+  <div id="errbox" class="msg err hidden"></div>
+  <div id="warnbox" class="msg warn hidden"></div>
+
+  <section class="card" id="conclusion">
+    <h2><span class="n">1</span>今天喂多少<span class="tag" id="concl-tag"></span></h2>
+    <div class="concl-main">
+      <div>
+        <div class="big">结论：<b id="out-dryline">—</b></div>
+        <div class="chips" id="concl-chips">
+          <span class="chip">每日热量 <b id="out-kcal">—</b></span>
+          <span class="chip">分餐 <b id="out-meals">—</b></span>
+          <span class="chip">每月粮钱 <b id="out-cost">—</b></span>
+        </div>
+        <div class="hint" id="out-mealsnote" style="font-size:11.5px;color:var(--ink3);margin-top:6px"></div>
+      </div>
+      <div class="concl-side">
+        <p id="out-bcsline">—</p>
+        <p id="out-weightline">—</p>
+        <p id="out-rateline">—</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="inputs">
+    <h2><span class="n">2</span>填你家的数<span class="tag">改哪个都会立刻重算</span></h2>
+    <div class="grid cols-3">
+      <div>
+        <div class="field">
+          <label for="p-species">猫还是狗</label>
+          <select id="p-species"><option value="cat">猫</option><option value="dog">狗</option></select>
+        </div>
+        <div class="field">
+          <label for="p-weight">当前体重（kg）</label>
+          <input type="number" id="p-weight" step="0.1" min="0.1">
+          <div class="hint">猫 0.3–12 kg，狗 0.4–90 kg</div>
+        </div>
+        <div class="field">
+          <label for="p-bcs">体况评分（1–9，5 = 理想）</label>
+          <select id="p-bcs"></select>
+          <div class="hint">摸肋骨和腰：摸得到肋骨不硌手、有腰线 = 5</div>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label for="p-age">年龄阶段</label>
+          <select id="p-age"></select>
+        </div>
+        <div class="field">
+          <label for="p-neuter">是否绝育</label>
+          <select id="p-neuter"><option value="yes">是</option><option value="no">否</option></select>
+        </div>
+        <div class="field">
+          <label for="p-activity">活动量</label>
+          <select id="p-activity"></select>
+        </div>
+      </div>
+      <div>
+        <div class="row2">
+          <div class="field">
+            <label for="p-drykcal">干粮（kcal/100g）</label>
+            <input type="number" id="p-drykcal" step="1" min="1">
+          </div>
+          <div class="field">
+            <label for="p-dryprice">干粮（元/kg）</label>
+            <input type="number" id="p-dryprice" step="1" min="0">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="p-wetkcal">罐头（kcal/100g）</label>
+            <input type="number" id="p-wetkcal" step="1" min="1">
+          </div>
+          <div class="field">
+            <label for="p-can">罐净重（g）</label>
+            <input type="number" id="p-can" step="1" min="1">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="p-canprice">罐头（元/罐）</label>
+            <input type="number" id="p-canprice" step="0.5" min="0">
+          </div>
+          <div class="field">
+            <label for="p-wetpct">湿粮热量占比（%）</label>
+            <input type="number" id="p-wetpct" step="5" min="0" max="100">
+          </div>
+        </div>
+        <div class="field">
+          <label for="p-target">目标体重（kg）</label>
+          <input type="number" id="p-target" step="0.1" min="0.1">
+          <div class="hint">和当前体重一样就是「只维持」；本工具只排减重方向</div>
+        </div>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button id="b-default" class="primary">恢复示例默认</button>
+      <button id="b-s-demo">示例：绝育猫偏胖</button>
+      <button id="b-s-lean">示例：偏瘦的猫</button>
+      <button id="b-s-dog">示例：大型犬减重</button>
+      <button id="b-save">保存到本机</button>
+      <button id="b-clear">清掉本机存档</button>
+    </div>
+    <div class="hint" id="save-hint" style="font-size:11.5px;color:var(--ink3);margin-top:6px"></div>
+  </section>
+
+  <section class="card" id="plan-card">
+    <h2><span class="n">3</span>四套喂法并排对照<span class="tag">「采用」会写回上面的输入</span></h2>
+    <div class="tblwrap">
+      <table class="plan" id="t-plan">
+        <thead>
+          <tr>
+            <th>方案</th><th>每日热量</th><th>干粮</th><th>罐头</th><th>每月粮钱</th><th>达标周数</th><th>说明</th>
+          </tr>
+        </thead>
+        <tbody id="t-plan-body"></tbody>
+      </table>
+    </div>
+    <div class="hint" id="plan-hint" style="font-size:11.5px;color:var(--ink3);margin-top:8px">
+      前三行是同一份维持热量在三种分配下的样子（全干粮 / 全湿粮 / 对半），第四行是你填的目标体重和占比。热量一样的行之间，差别全部来自干粮与罐头的单价。
+    </div>
+  </section>
+
+  <div class="grid cols-2">
+    <section class="card" id="bcs-card">
+      <h2><span class="n">4</span>体况诊断</h2>
+      <dl class="kv" id="bcs-body"></dl>
+      <div class="hint" style="font-size:11.5px;color:var(--ink3);margin-top:8px">
+        体况评分 → 体脂率是<b>分档表</b>（不是测出来的），理想体重按「去脂体重不变」反推。评分你自己手感打，打偏了结论就跟着偏。
+      </div>
+    </section>
+    <section class="card" id="aggr-card">
+      <h2><span class="n">5</span>「少喂点」到底是多少</h2>
+      <dl class="kv" id="aggr-body"></dl>
+      <div class="hint" style="font-size:11.5px;color:var(--ink3);margin-top:8px">
+        常有人直接按 0.8 × 静息需求（RER）喂。这个数能当参考，但把它折成掉重速率后要跟安全线比一下 —— 猫掉太快是有风险的。
+      </div>
+    </section>
+  </div>
+
+  <section class="card" id="tl-card">
+    <h2><span class="n">6</span>到目标体重的周数<span class="tag" id="tl-tag"></span></h2>
+    <div id="tl-body"></div>
+  </section>
+
+  <section class="card" id="check-card">
+    <h2><span class="n">7</span>引擎自检<span class="tag" id="check-tag"></span></h2>
+    <ul class="checks" id="check-body"></ul>
+  </section>
+
+  <section class="card" id="bounds-card">
+    <h2><span class="n">8</span>导出与本机存档</h2>
+    <div class="btnrow">
+      <button id="b-csv">导出 CSV</button>
+      <button id="b-md">导出 Markdown</button>
+      <button id="b-png">导出结果卡 PNG</button>
+      <button id="b-json">导出 JSON 备份</button>
+    </div>
+    <div class="hint" id="dl-hint" style="font-size:11.5px;color:var(--ink3);margin-top:6px"></div>
+    <details id="bounds">
+      <summary>口径、假设与不处理的情形（点开）</summary>
+      <div id="bounds-body"></div>
+    </details>
+  </section>
+
+  <footer>
+    <p>粮喂多了 · v1.0.0 ｜ 单文件应用，全部计算在本机浏览器内完成，不上传任何数据。</p>
+    <p>本工具只做算术：不做诊断、不开处方、不评价粮的品质与配方。任何疾病、处方粮、怀孕哺乳期的喂养请按兽医建议。</p>
+  </footer>
+</div>
+<script>
+/*CORE*/
+</script>
+<script>
+/*UI*/
+</script>
+</body>
+</html>

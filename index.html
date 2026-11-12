@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>粮喂多了 · 猫狗每天吃多少克、几罐、要减多久</title>
+<meta name="description" content="按体重、体况评分和粮的热量密度，算出猫狗每天该喂多少克干粮、几个罐头，几套喂法并排对照月花费，再排出到目标体重的周数。">
+<style>
+:root{
+  --ink:#1f2e28; --ink2:#49584f; --ink3:#7c8a82; --line:#dbe2db;
+  --paper:#f5f2ea; --card:#fffefb; --green:#1f6b4a; --green-d:#154c34; --amber:#a2610c;
+  --warnbg:#fdf5e8; --warnline:#eed9b4; --errbg:#fdeeee; --errline:#e7bcbc;
+  --okbg:#eef6f0; --okline:#c6e0d0; --rad:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font:15px/1.62 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:18px 14px 64px}
+header.top{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:14px}
+h1{font-size:23px;line-height:1.3;margin:0 0 6px}
+.sub{color:var(--ink2);font-size:13.5px}
+.sub b{color:var(--green-d)}
+.tagline{margin-top:7px;font-size:12.5px;color:var(--ink3)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:14px;min-width:0}
+.card+.card{margin-top:12px}
+.card h2{font-size:14px;margin:0 0 10px;letter-spacing:.4px;color:var(--ink2);font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2 .n{display:inline-flex;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;align-items:center;justify-content:center;flex:0 0 auto}
+.card h2 .tag{margin-left:auto;font-weight:400;font-size:12px;color:var(--ink3)}
+.grid{display:grid;gap:12px}
+.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.field{margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12.5px;color:var(--ink2);margin-bottom:4px}
+.field .hint{font-size:11.5px;color:var(--ink3);margin-top:3px;line-height:1.45}
+input[type=number],input[type=text],select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:14px;background:#fff;color:var(--ink);min-width:0}
+input:focus,select:focus{outline:2px solid #1f6b4a33;border-color:var(--green)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hidden{display:none !important}
+.btnrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+button{font:inherit;font-size:13px;padding:7px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--green);color:var(--green-d)}
+button.primary{background:var(--green);border-color:var(--green);color:#fff}
+button.primary:hover{background:var(--green-d);color:#fff}
+button.sm{font-size:12px;padding:5px 9px}
+.msg{border-radius:8px;padding:9px 11px;margin-bottom:11px;font-size:13px}
+.msg.err{background:var(--errbg);border:1px solid var(--errline);color:#8d1f1f}
+.msg.warn{background:var(--warnbg);border:1px solid var(--warnline);color:#7a4606}
+.msg ul{margin:5px 0 0;padding-left:18px}
+/* 结论条 */
+#conclusion{background:linear-gradient(180deg,#fffefb,#f7faf7);border:1px solid var(--line);border-left:4px solid var(--green)}
+.concl-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+.big{font-size:15px;color:var(--ink2)}
+.big b{display:block;font-size:31px;line-height:1.2;color:var(--green-d);letter-spacing:.5px;margin:2px 0 4px;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:#f1f5f1;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;color:var(--ink2)}
+.chip b{color:var(--ink)}
+.concl-side{font-size:13px;color:var(--ink2);border-left:1px dashed var(--line);padding-left:13px}
+.concl-side p{margin:0 0 6px}
+/* 对照表 */
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.plan{width:100%;border-collapse:collapse;font-size:13px}
+table.plan th,table.plan td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:right;vertical-align:top}
+table.plan th:first-child,table.plan td:first-child{text-align:left}
+table.plan thead th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap}
+table.plan tr.pick td{background:#f4f9f5}
+table.plan td.name{font-weight:600;white-space:nowrap}
+table.plan td.num{font-variant-numeric:tabular-nums}
+table.plan td.note{text-align:left;color:var(--ink3);font-size:12px;min-width:150px;max-width:250px}
+table.plan .adopt{margin-top:5px}
+.badge{display:inline-block;font-size:11px;border-radius:5px;padding:1px 6px;background:var(--okbg);border:1px solid var(--okline);color:var(--green-d);margin-left:6px}
+/* 非法输入时：结论条别留一排「—」，直接一句话说清 */
+#conclusion.invalid .chips,#conclusion.invalid .concl-side,#conclusion.invalid #out-mealsnote{display:none}
+#conclusion.invalid .big b{font-size:19px;line-height:1.45;color:#8d1f1f;font-weight:600}
+/* 时间线 */
+table.tl{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+table.tl th:first-child,table.tl td:first-child{width:36%}
+table.tl th:nth-child(2),table.tl td:nth-child(2){width:31%}
+table.tl th:nth-child(3),table.tl td:nth-child(3){width:33%}
+table.tl th,table.tl td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+table.tl th:first-child,table.tl td:first-child{text-align:left}
+table.tl thead th{font-size:12px;color:var(--ink3);font-weight:600}
+/* 自检 */
+ul.checks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;font-size:12.5px}
+ul.checks li{display:flex;gap:6px;align-items:flex-start;color:var(--ink2);min-width:0}
+ul.checks li .m{flex:0 0 auto;font-weight:700}
+ul.checks li.ok .m{color:var(--green)}
+ul.checks li.no{color:#8d1f1f}
+ul.checks li.no .m{color:#b42318}
+/* 键值行 */
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;font-size:13px}
+.kv dt{color:var(--ink3)}
+.kv dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.note-list{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink2)}
+.note-list li{margin-bottom:3px}
+details{border:1px dashed var(--line);border-radius:8px;padding:8px 11px;margin-top:10px;font-size:13px;color:var(--ink2)}
+details summary{cursor:pointer;color:var(--ink2);font-weight:600}
+details p,details li{font-size:12.5px;line-height:1.55}
+footer{margin-top:20px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+@media (max-width:860px){
+  .cols-3{grid-template-columns:1fr}
+  .concl-main{grid-template-columns:1fr}
+  .concl-side{border-left:0;border-top:1px dashed var(--line);padding-left:0;padding-top:10px}
+  ul.checks{grid-template-columns:1fr}
+}
+@media (max-width:700px){
+  .cols-2{grid-template-columns:1fr}
+  /* 窄屏：对照表改成一条条卡片，避免横向溢出 */
+  table.plan,table.plan tbody,table.plan tr,table.plan td{display:block;width:auto}
+  table.plan thead{display:none}
+  table.plan tr{border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:9px;background:#fff}
+  table.plan tr.pick{background:#f4f9f5}
+  table.plan td{border:0;padding:3px 0;text-align:left;display:flex;justify-content:space-between;gap:10px}
+  table.plan td::before{content:attr(data-l);color:var(--ink3);font-size:12px;flex:0 0 auto}
+  table.plan td.name{font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:3px}
+  table.plan td.name::before{content:""}
+  table.plan td.note{max-width:none;display:block}
+  table.plan td.note::before{content:attr(data-l);display:block;margin-bottom:2px}
+  table.tl{font-size:12.5px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>粮喂多了</h1>
+    <p class="sub">按体重、体况评分和你家粮的<b>热量密度</b>，算出每天该喂多少克、几个罐头；四套喂法并排看月花费，再排到目标体重要多少周。</p>
+    <p class="tagline">不联网、不认牌子、不评价粮的好坏；默认数据是虚构示例，换成你家粮包装上的数字更准。</p>
+  </header>
+
+  <div id="errbox" class="msg err hidden"></div>
+  <div id="warnbox" class="msg warn hidden"></div>
+
+  <section class="card" id="conclusion">
+    <h2><span class="n">1</span>今天喂多少<span class="tag" id="concl-tag"></span></h2>
+    <div class="concl-main">
+      <div>
+        <div class="big">结论：<b id="out-dryline">—</b></div>
+        <div class="chips" id="concl-chips">
+          <span class="chip">每日热量 <b id="out-kcal">—</b></span>
+          <span class="chip">分餐 <b id="out-meals">—</b></span>
+          <span class="chip">每月粮钱 <b id="out-cost">—</b></span>
+        </div>
+        <div class="hint" id="out-mealsnote" style="font-size:11.5px;color:var(--ink3);margin-top:6px"></div>
+      </div>
+      <div class="concl-side">
+        <p id="out-bcsline">—</p>
+        <p id="out-weightline">—</p>
+        <p id="out-rateline">—</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="inputs">
+    <h2><span class="n">2</span>填你家的数<span class="tag">改哪个都会立刻重算</span></h2>
+    <div class="grid cols-3">
+      <div>
+        <div class="field">
+          <label for="p-species">猫还是狗</label>
+          <select id="p-species"><option value="cat">猫</option><option value="dog">狗</option></select>
+        </div>
+        <div class="field">
+          <label for="p-weight">当前体重（kg）</label>
+          <input type="number" id="p-weight" step="0.1" min="0.1">
+          <div class="hint">猫 0.3–12 kg，狗 0.4–90 kg</div>
+        </div>
+        <div class="field">
+          <label for="p-bcs">体况评分（1–9，5 = 理想）</label>
+          <select id="p-bcs"></select>
+          <div class="hint">摸肋骨和腰：摸得到肋骨不硌手、有腰线 = 5</div>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label for="p-age">年龄阶段</label>
+          <select id="p-age"></select>
+        </div>
+        <div class="field">
+          <label for="p-neuter">是否绝育</label>
+          <select id="p-neuter"><option value="yes">是</option><option value="no">否</option></select>
+        </div>
+        <div class="field">
+          <label for="p-activity">活动量</label>
+          <select id="p-activity"></select>
+        </div>
+      </div>
+      <div>
+        <div class="row2">
+          <div class="field">
+            <label for="p-drykcal">干粮（kcal/100g）</label>
+            <input type="number" id="p-drykcal" step="1" min="1">
+          </div>
+          <div class="field">
+            <label for="p-dryprice">干粮（元/kg）</label>
+            <input type="number" id="p-dryprice" step="1" min="0">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="p-wetkcal">罐头（kcal/100g）</label>
+            <input type="number" id="p-wetkcal" step="1" min="1">
+          </div>
+          <div class="field">
+            <label for="p-can">罐净重（g）</label>
+            <input type="number" id="p-can" step="1" min="1">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="p-canprice">罐头（元/罐）</label>
+            <input type="number" id="p-canprice" step="0.5" min="0">
+          </div>
+          <div class="field">
+            <label for="p-wetpct">湿粮热量占比（%）</label>
+            <input type="number" id="p-wetpct" step="5" min="0" max="100">
+          </div>
+        </div>
+        <div class="field">
+          <label for="p-target">目标体重（kg）</label>
+          <input type="number" id="p-target" step="0.1" min="0.1">
+          <div class="hint">和当前体重一样就是「只维持」；本工具只排减重方向</div>
+        </div>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button id="b-default" class="primary">恢复示例默认</button>
+      <button id="b-s-demo">示例：绝育猫偏胖</button>
+      <button id="b-s-lean">示例：偏瘦的猫</button>
+      <button id="b-s-dog">示例：大型犬减重</button>
+      <button id="b-save">保存到本机</button>
+      <button id="b-clear">清掉本机存档</button>
+    </div>
+    <div class="hint" id="save-hint" style="font-size:11.5px;color:var(--ink3);margin-top:6px"></div>
+  </section>
+
+  <section class="card" id="plan-card">
+    <h2><span class="n">3</span>四套喂法并排对照<span class="tag">「采用」会写回上面的输入</span></h2>
+    <div class="tblwrap">
+      <table class="plan" id="t-plan">
+        <thead>
+          <tr>
+            <th>方案</th><th>每日热量</th><th>干粮</th><th>罐头</th><th>每月粮钱</th><th>达标周数</th><th>说明</th>
+          </tr>
+        </thead>
+        <tbody id="t-plan-body"></tbody>
+      </table>
+    </div>
+    <div class="hint" id="plan-hint" style="font-size:11.5px;color:var(--ink3);margin-top:8px">
+      前三行是同一份维持热量在三种分配下的样子（全干粮 / 全湿粮 / 对半），第四行是你填的目标体重和占比。热量一样的行之间，差别全部来自干粮与罐头的单价。
+    </div>
+  </section>
+
+  <div class="grid cols-2">
+    <section class="card" id="bcs-card">
+      <h2><span class="n">4</span>体况诊断</h2>
+      <dl class="kv" id="bcs-body"></dl>
+      <div class="hint" style="font-size:11.5px;color:var(--ink3);margin-top:8px">
+        体况评分 → 体脂率是<b>分档表</b>（不是测出来的），理想体重按「去脂体重不变」反推。评分你自己手感打，打偏了结论就跟着偏。
+      </div>
+    </section>
+    <section class="card" id="aggr-card">
+      <h2><span class="n">5</span>「少喂点」到底是多少</h2>
+      <dl class="kv" id="aggr-body"></dl>
+      <div class="hint" style="font-size:11.5px;color:var(--ink3);margin-top:8px">
+        常有人直接按 0.8 × 静息需求（RER）喂。这个数能当参考，但把它折成掉重速率后要跟安全线比一下 —— 猫掉太快是有风险的。
+      </div>
+    </section>
+  </div>
+
+  <section class="card" id="tl-card">
+    <h2><span class="n">6</span>到目标体重的周数<span class="tag" id="tl-tag"></span></h2>
+    <div id="tl-body"></div>
+  </section>
+
+  <section class="card" id="check-card">
+    <h2><span class="n">7</span>引擎自检<span class="tag" id="check-tag"></span></h2>
+    <ul class="checks" id="check-body"></ul>
+  </section>
+
+  <section class="card" id="bounds-card">
+    <h2><span class="n">8</span>导出与本机存档</h2>
+    <div class="btnrow">
+      <button id="b-csv">导出 CSV</button>
+      <button id="b-md">导出 Markdown</button>
+      <button id="b-png">导出结果卡 PNG</button>
+      <button id="b-json">导出 JSON 备份</button>
+    </div>
+    <div class="hint" id="dl-hint" style="font-size:11.5px;color:var(--ink3);margin-top:6px"></div>
+    <details id="bounds">
+      <summary>口径、假设与不处理的情形（点开）</summary>
+      <div id="bounds-body"></div>
+    </details>
+  </section>
+
+  <footer>
+    <p>粮喂多了 · v1.0.0 ｜ 单文件应用，全部计算在本机浏览器内完成，不上传任何数据。</p>
+    <p>本工具只做算术：不做诊断、不开处方、不评价粮的品质与配方。任何疾病、处方粮、怀孕哺乳期的喂养请按兽医建议。</p>
+  </footer>
+</div>
+<script>
+/* 粮喂多了 · 核心引擎（纯函数，浏览器与 node 通用）
+ *
+ * 一句话：把宠物的体重、体况评分和粮的热量密度填进去，算出每天该喂多少克干粮、几个罐头，
+ *         几套喂法并排对照月花费，再排出到目标体重需要多少周。
+ *
+ * 口径与假设全部写在页面上（也在 需求与调研.md §3 里）：本引擎不联网、不识别任何品牌、
+ * 不评价粮的品质、不做诊断也不开处方。所有数字都由输入与下面的公式算出来。
+ *
+ * 公式（与页面、说明里每个数字同一套）：
+ *   RER        = 70 · W^0.75                                  （kcal/日，W 为 kg）
+ *   MER        = RER · k                                      （k 见 kFactor 的系数表口径）
+ *   体脂率      = BCS_BF[BCS]；去脂体重 = W·(1−体脂率)
+ *   理想体重    = 去脂体重 ÷ (1 − 0.20)                         （去脂体重守恒）
+ *   干粮 g     = 干粮热量 kcal ÷ (干粮 kcal/100g) × 100
+ *   罐头 罐    = 湿粮热量 kcal ÷ (罐头 kcal/100g × 罐净重 ÷ 100)
+ *   能量缺口 G  = 速率 × W × 7700 ÷ 7                           （7700 kcal ≈ 1 kg 体脂）
+ *   目标热量 T  = MER − G，下限保护 T ≥ max(0.8·RER(理想体重), 0.6·MER)
+ *   实际速率    = (MER − T)·7 ÷ 7700 ÷ W × 100                  （%/周）
+ *   周数        = (W − 目标体重) ÷ W × 100 ÷ 实际速率
+ *   月成本      = 每日 g×30÷1000×元每kg + 每日罐数×30×元每罐
+ *   1000 kcal 单价：干粮 = 10·元每kg ÷ (kcal/100g)；罐头 = (1000 ÷ kcal每g) ÷ 罐净重 × 元每罐
+ */
+(function (root, factory) {
+  const A = factory();
+  if (typeof module === 'object' && module.exports) module.exports = A;
+  if (root) root.AppCore = A;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  /* ─────────────── 常量与口径 ─────────────── */
+
+  const VERSION = '1.0.0';
+  const RER_K = 70;                 // RER = 70 · W^0.75
+  const BW_EXP = 0.75;              // 代谢体重指数
+  const KCAL_PER_KG_FAT = 7700;     // 1 kg 体脂 ≈ 7700 kcal
+  const IDEAL_BF = 0.20;            // 理想体脂率（猫狗同用）
+  const BAND = 0.15;                // 理想体重带宽 ±15%
+
+  /* BCS(1–9) → 体脂率。这是**分档设计表**，取自公开体况评分图表常见的区间中值，
+     不是精确测量：BCS 4–5 视为理想（体脂 18–20%），BCS ≤3 偏瘦，≥8 肥胖。 */
+  const BCS_BF = { 1: 0.05, 2: 0.10, 3: 0.15, 4: 0.18, 5: 0.20, 6: 0.28, 7: 0.35, 8: 0.45, 9: 0.55 };
+  const BCS_LABEL = { 1: '极瘦', 2: '很瘦', 3: '偏瘦', 4: '略瘦', 5: '理想', 6: '略胖', 7: '偏胖', 8: '肥胖', 9: '严重肥胖' };
+
+  /* 成年基准系数（绝育） → 未绝育再 +0.2；老年再 −0.2（下限 1.0）；幼年用 YOUNG_K。 */
+  const ADULT_BASE = { cat: { low: 1.0, mid: 1.2, high: 1.4 }, dog: { low: 1.4, mid: 1.8, high: 2.2 } };
+  const YOUNG_K = { cat: { '<4月': 2.5, '4-12月': 2.0 }, dog: { '<4月': 3.0, '4-12月': 2.0 } };
+  const NEUTER_BONUS = 0.2;
+  const SENIOR_DROP = 0.2;
+
+  /* 减重速率：期望值取公开区间中值；上限是安全线，超了要警告。 */
+  const RATE = { cat: 0.75, dog: 1.5 };        // 期望速率 %/周
+  const SAFE_MAX = { cat: 1.0, dog: 2.0 };     // 安全上限 %/周
+  const SAFE_MIN = { cat: 0.5, dog: 1.0 };     // 偏慢提示线 %/周
+
+  const LIMITS = {
+    cat: { wMin: 0.3, wMax: 12.0 },
+    dog: { wMin: 0.4, wMax: 90.0 },
+    dryKcalMin: 1, dryKcalMax: 600,
+    wetKcalMin: 1, wetKcalMax: 400,
+    canNetMin: 1, canNetMax: 800,
+  };
+
+  const MEALS_BY_AGE = { '<4月': 4, '4-12月': 3, '成年': 2, '老年': 2 };
+  const SPECIES = ['cat', 'dog'];
+  const SPECIES_LABEL = { cat: '猫', dog: '狗' };
+  const AGE_STAGES = ['<4月', '4-12月', '成年', '老年'];
+  const ACTIVITIES = ['low', 'mid', 'high'];
+  const ACTIVITY_LABEL = { low: '低（多数时间在家／很少出门）', mid: '中（每天有活动）', high: '高（活跃／工作犬）' };
+  const FIELDS = ['species', 'weight', 'bcs', 'ageStage', 'neutered', 'activity',
+    'dryKcalPer100g', 'dryPricePerKg', 'wetKcalPer100g', 'canNetG', 'canPrice', 'wetPct', 'targetWeight'];
+
+  /* ─────────────── 默认与预设（默认数据是虚构示例） ─────────────── */
+
+  const DEFAULTS = {
+    species: 'cat', weight: 4.8, bcs: 7, ageStage: '成年', neutered: true, activity: 'mid',
+    dryKcalPer100g: 360, dryPricePerKg: 60, wetKcalPer100g: 90, canNetG: 85, canPrice: 8,
+    wetPct: 30, targetWeight: 3.9,
+  };
+
+  function defaults() {
+    const o = {};
+    FIELDS.forEach(function (f) { o[f] = DEFAULTS[f]; });
+    return o;
+  }
+
+  const SCENARIOS = [
+    { id: 'demo', label: '示例：绝育室内猫偏胖（4.8 kg / BCS 7）', input: defaults() },
+    {
+      id: 'lean', label: '示例：偏瘦的猫（3.2 kg / BCS 3）',
+      input: Object.assign(defaults(), { weight: 3.2, bcs: 3, activity: 'high', targetWeight: 3.2, wetPct: 0 }),
+    },
+    {
+      id: 'dog', label: '示例：大型犬减重（40 kg / BCS 9 / 低活动）',
+      input: Object.assign(defaults(), {
+        species: 'dog', weight: 40, bcs: 9, activity: 'low', neutered: true,
+        dryKcalPer100g: 340, dryPricePerKg: 42, wetKcalPer100g: 110, canNetG: 400, canPrice: 22,
+        wetPct: 20, targetWeight: 27.5,
+      }),
+    },
+  ];
+  function scenarios() {
+    return SCENARIOS.map(function (s) { return { id: s.id, label: s.label, input: Object.assign({}, s.input) }; });
+  }
+
+  /* ─────────────── 基础工具 ─────────────── */
+
+  function num(v) {
+    if (v === null || v === undefined || v === '') return NaN;
+    const n = Number(v);
+    return isFinite(n) ? n : NaN;
+  }
+  function isInt(x) { return typeof x === 'number' && isFinite(x) && Math.floor(x) === x; }
+
+  /* ─────────────── 公式实现 ─────────────── */
+
+  /* RER = 70 · W^0.75（W 为 kg） */
+  function rer(kg) {
+    const w = num(kg);
+    if (!isFinite(w) || w <= 0) return NaN;
+    return RER_K * Math.pow(w, BW_EXP);
+  }
+
+  /* 系数 k：返回 {k, basis, steps[]} —— steps 用来在页面上解释这个数是怎么来的 */
+  function kFactor(inp) {
+    const sp = inp.species, age = inp.ageStage, act = inp.activity;
+    const steps = [];
+    if (SPECIES.indexOf(sp) < 0 || AGE_STAGES.indexOf(age) < 0 || ACTIVITIES.indexOf(act) < 0) {
+      return { k: NaN, basis: '', steps: ['物种／年龄阶段／活动量取值不在范围内，系数算不出来'] };
+    }
+    if (YOUNG_K[sp][age] != null) {
+      const k = YOUNG_K[sp][age];
+      steps.push('幼年（' + age + '）：' + SPECIES_LABEL[sp] + ' 取 ' + k + '，不受绝育与活动量影响');
+      return { k: k, basis: '幼年表', steps: steps };
+    }
+    let k = ADULT_BASE[sp][act];
+    steps.push('成年基准（' + SPECIES_LABEL[sp] + ' / 活动量' + act + '，已绝育）：' + k);
+    if (!inp.neutered) { k += NEUTER_BONUS; steps.push('未绝育：+' + NEUTER_BONUS + ' → ' + round(k, 4)); }
+    if (age === '老年') { k = Math.max(1.0, k - SENIOR_DROP); steps.push('老年：−' + SENIOR_DROP + '，下限 1.0 → ' + round(k, 4)); }
+    return { k: k, basis: (age === '老年' ? '成年基准±绝育±老年' : '成年基准±绝育'), steps: steps };
+  }
+
+  function merKcal(inp) {
+    const r = rer(inp.weight), kf = kFactor(inp);
+    return r * kf.k;
+  }
+
+  /* 体况评分 → 体脂率 → 去脂体重 → 理想体重 */
+  function bcsInfo(inp) {
+    const w = num(inp.weight), bcs = num(inp.bcs);
+    const bf = BCS_BF[bcs];
+    if (!isFinite(w) || bf === undefined) return { ok: false };
+    const lean = w * (1 - bf);
+    const ideal = lean / (1 - IDEAL_BF);
+    return {
+      ok: true, bcs: bcs, bf: bf, leanKg: lean, idealKg: ideal,
+      idealLo: ideal * (1 - BAND), idealHi: ideal * (1 + BAND),
+      label: BCS_LABEL[bcs] || '',
+      direction: (num(inp.targetWeight) < w - 1e-9) ? 'lose' : 'maintain',
+    };
+  }
+
+  /* 每罐多少 kcal（按 kcal/100g × 罐净重） */
+  function canKcalOf(inp) {
+    const per100 = num(inp.wetKcalPer100g), net = num(inp.canNetG);
+    if (!isFinite(per100) || !isFinite(net)) return NaN;
+    return per100 * net / 100;
+  }
+
+  /* 给定每日总热量与湿粮热量占比 → 干粮克数、罐头数、成本 */
+  function planOf(kcal, wetPct, inp) {
+    const per100 = num(inp.dryKcalPer100g), dryPrice = num(inp.dryPricePerKg), canPrice = num(inp.canPrice);
+    const canK = canKcalOf(inp);
+    const p = num(wetPct) / 100;
+    const wetKcal = kcal * p, dryKcal = kcal - wetKcal;
+    const dryG = dryKcal / (per100 / 100);
+    const cans = wetKcal / canK;
+    const dryCost = dryG * 30 / 1000 * dryPrice;
+    const wetCost = cans * 30 * canPrice;
+    return {
+      kcal: kcal, wetKcal: wetKcal, dryKcal: dryKcal, dryG: dryG, cans: cans,
+      dryCost: dryCost, wetCost: wetCost, monthlyCost: dryCost + wetCost,
+    };
+  }
+
+  /* 目标体重方案：只排减重方向 */
+  function weightPlan(inp, mer, bcs) {
+    const w = num(inp.weight), target = num(inp.targetWeight), sp = inp.species;
+    const floor = Math.max(0.8 * rer(bcs.idealKg), 0.6 * mer);
+    if (!(target < w - 1e-9)) {
+      return {
+        direction: 'maintain', gapKcal: 0, targetKcal: mer, floorKcal: floor, clamped: false,
+        planKcal: mer, actualRate: 0, needPct: (w - target) / w * 100, weeks: null,
+        expectedRate: NaN,
+        note: '目标体重不小于当前体重：本工具只排减重方向，增重请按兽医建议调整',
+      };
+    }
+    const expectedRate = RATE[sp];
+    const gapKcal = expectedRate / 100 * w * KCAL_PER_KG_FAT / 7;
+    const targetKcal = mer - gapKcal;
+    const clamped = targetKcal < floor;
+    const planKcal = Math.max(targetKcal, floor);
+    const actualRate = (mer - planKcal) * 7 / KCAL_PER_KG_FAT / w * 100;
+    const needPct = (w - target) / w * 100;
+    const weeks = actualRate > 0 ? needPct / actualRate : null;
+    return {
+      direction: 'lose', gapKcal: gapKcal, targetKcal: targetKcal, floorKcal: floor, clamped: clamped,
+      planKcal: planKcal, actualRate: actualRate, needPct: needPct, weeks: weeks,
+      expectedRate: expectedRate,
+      note: clamped ? '按期望速率算出的热量低于下限保护，已抬到下限，实际速率随之放慢' : '按' + SP_LABEL(sp) + '期望速率 ' + expectedRate + ' %/周排出',
+    };
+  }
+  function SP_LABEL(sp) { return SPECIES_LABEL[sp] || sp; }
+
+  /* 每 1000 kcal 单价：跨品类可比的成本口径 */
+  function unitCostOf(inp) {
+    const per100 = num(inp.dryKcalPer100g), dryPrice = num(inp.dryPricePerKg);
+    const wetPer100 = num(inp.wetKcalPer100g), net = num(inp.canNetG), canPrice = num(inp.canPrice);
+    const dryPer1000 = 10000 / per100 / 1000 * dryPrice;         // = 10·元每kg ÷ (kcal/100g)
+    const wetKcalPerG = wetPer100 / 100;
+    const wetPer1000 = (1000 / wetKcalPerG) / net * canPrice;
+    return {
+      dryPer1000Kcal: dryPer1000, wetPer1000Kcal: wetPer1000,
+      ratio: dryPer1000 > 0 ? wetPer1000 / dryPer1000 : NaN,
+      cheaper: dryPer1000 <= wetPer1000 ? 'dry' : 'wet',
+    };
+  }
+
+  /* ─────────────── 校验 ─────────────── */
+
+  function validate(inp) {
+    const errors = [], warnings = [];
+    const E = function (field, msg) { errors.push({ field: field, msg: msg }); };
+    if (!inp || typeof inp !== 'object') { E('_', '没有读到输入'); return { ok: false, errors: errors, warnings: warnings }; }
+
+    const sp = inp.species;
+    if (SPECIES.indexOf(sp) < 0) E('species', '物种只能是猫或狗');
+    const lim = LIMITS[sp] || LIMITS.cat;
+
+    const w = num(inp.weight);
+    if (!isFinite(w)) E('weight', '体重没填或不是数字');
+    else if (w <= 0) E('weight', '体重必须大于 0');
+    else if (w < lim.wMin || w > lim.wMax) E('weight', '体重 ' + w + ' kg 超出本工具范围（' + SP_LABEL(sp) + ' ' + lim.wMin + '–' + lim.wMax + ' kg）');
+
+    const t = num(inp.targetWeight);
+    if (!isFinite(t)) E('targetWeight', '目标体重没填或不是数字');
+    else if (t <= 0) E('targetWeight', '目标体重必须大于 0');
+    else if (t < lim.wMin || t > lim.wMax) E('targetWeight', '目标体重 ' + t + ' kg 超出本工具范围（' + SP_LABEL(sp) + ' ' + lim.wMin + '–' + lim.wMax + ' kg）');
+
+    const bcs = num(inp.bcs);
+    if (!isInt(bcs)) E('bcs', '体况评分必须是整数');
+    else if (bcs < 1 || bcs > 9) E('bcs', '体况评分只能是 1–9');
+
+    if (AGE_STAGES.indexOf(inp.ageStage) < 0) E('ageStage', '年龄阶段取值不在范围内');
+    if (typeof inp.neutered !== 'boolean') E('neutered', '是否绝育必须是是或否');
+    if (ACTIVITIES.indexOf(inp.activity) < 0) E('activity', '活动量取值不在范围内');
+
+    const dk = num(inp.dryKcalPer100g);
+    if (!isFinite(dk)) E('dryKcalPer100g', '干粮热量密度没填或不是数字');
+    else if (dk <= 0) E('dryKcalPer100g', '干粮热量密度必须大于 0（不能拿 0 当分母）');
+    else if (dk > LIMITS.dryKcalMax) E('dryKcalPer100g', '干粮热量密度 ' + dk + ' kcal/100g 超出常见上限 ' + LIMITS.dryKcalMax);
+
+    const wk = num(inp.wetKcalPer100g);
+    if (!isFinite(wk)) E('wetKcalPer100g', '罐头热量密度没填或不是数字');
+    else if (wk <= 0) E('wetKcalPer100g', '罐头热量密度必须大于 0');
+    else if (wk > LIMITS.wetKcalMax) E('wetKcalPer100g', '罐头热量密度 ' + wk + ' kcal/100g 超出常见上限 ' + LIMITS.wetKcalMax);
+
+    const net = num(inp.canNetG);
+    if (!isFinite(net)) E('canNetG', '罐净重没填或不是数字');
+    else if (net <= 0) E('canNetG', '罐净重必须大于 0');
+    else if (net > LIMITS.canNetMax) E('canNetG', '罐净重 ' + net + ' g 超出常见上限 ' + LIMITS.canNetMax);
+
+    const dp = num(inp.dryPricePerKg);
+    if (!isFinite(dp)) E('dryPricePerKg', '干粮价格没填或不是数字');
+    else if (dp < 0) E('dryPricePerKg', '价格不能是负数');
+
+    const cp = num(inp.canPrice);
+    if (!isFinite(cp)) E('canPrice', '罐头价格没填或不是数字');
+    else if (cp < 0) E('canPrice', '价格不能是负数');
+
+    const pct = num(inp.wetPct);
+    if (!isFinite(pct)) E('wetPct', '湿粮热量占比没填或不是数字');
+    else if (pct < 0 || pct > 100) E('wetPct', '湿粮热量占比必须在 0–100 之间');
+
+    if (errors.length) return { ok: false, errors: errors, warnings: warnings };
+
+    /* 以下只给提示，不影响计算 */
+    const bcs2 = bcsInfo(inp);
+    if (bcs2.ok) {
+      if (t < bcs2.idealLo - 1e-9 || t > bcs2.idealHi + 1e-9) {
+        warnings.push({ code: 'target-band', msg: '目标体重 ' + round(t, 2) + ' kg 落在理想体重带宽（' + round(bcs2.idealLo, 2) + '–' + round(bcs2.idealHi, 2) + ' kg）之外，仍按你填的数计算' });
+      }
+      if (bcs >= 8) warnings.push({ code: 'obese', msg: '体况评分 ' + bcs + '（' + bcs2.label + '）：先排除疾病因素再减重，本工具不做诊断' });
+      if (bcs <= 3) warnings.push({ code: 'lean', msg: '体况评分 ' + bcs + '（' + bcs2.label + '）：偏瘦的增重方案不在本工具范围，建议先排查疾病' });
+    }
+    const mer = merKcal(inp);
+    const wp = weightPlan(inp, mer, bcs2);
+    if (wp.direction === 'lose') {
+      if (wp.actualRate > SAFE_MAX[sp] + 1e-9) {
+        warnings.push({ code: 'too-fast', msg: '按这套喂推算掉重 ' + round(wp.actualRate, 3) + ' %/周，超过' + SP_LABEL(sp) + '的安全上限 ' + SAFE_MAX[sp] + ' %/周' });
+      }
+      if (sp === 'cat' && wp.actualRate < SAFE_MIN.cat - 1e-9) {
+        warnings.push({ code: 'too-slow', msg: '按这套喂推算掉重 ' + round(wp.actualRate, 3) + ' %/周，低于猫的常见区间下限 ' + SAFE_MIN.cat + ' %/周' });
+      }
+      if (wp.clamped) {
+        warnings.push({ code: 'clamped', msg: '期望速率对应的热量低于下限保护（' + round(wp.floorKcal, 2) + ' kcal），已抬到下限，实际速率放慢到 ' + round(wp.actualRate, 3) + ' %/周' });
+      }
+    } else if (t > w + 1e-9) {
+      warnings.push({ code: 'gain', msg: '目标体重 ' + round(t, 2) + ' kg 大于当前体重：本工具只排减重方向，不会给出增重计划' });
+    }
+    if (dk === DEFAULTS.dryKcalPer100g && dp === DEFAULTS.dryPricePerKg && wk === DEFAULTS.wetKcalPer100g && net === DEFAULTS.canNetG && cp === DEFAULTS.canPrice) {
+      warnings.push({ code: 'defaults-food', msg: '热量密度与价格用的是虚构示例默认值，换成你家粮包装上的数字更准' });
+    }
+    return { ok: true, errors: errors, warnings: warnings };
+  }
+
+  /* ─────────────── 汇总计算 ─────────────── */
+
+  function compute(inp) {
+    const v = validate(inp);
+    const out = {
+      version: VERSION, ok: v.ok, errors: v.errors, warnings: v.warnings,
+      input: normalizeInput(inp),
+    };
+    if (!v.ok) return out;
+
+    const w = num(inp.weight), target = num(inp.targetWeight), sp = inp.species;
+    const R = rer(w), kf = kFactor(inp), mer = R * kf.k;
+    const bcs = bcsInfo(inp);
+    const wp = weightPlan(inp, mer, bcs);
+    const uc = unitCostOf(inp);
+    const canK = canKcalOf(inp);
+
+    const plans = [
+      Object.assign({ id: 'dry', label: '全干粮 · 维持体重', wetPct: 0, weeks: null, note: '最省钱的喂法（按每 1000 kcal 单价比较）；采用后把湿粮热量占比改成 0%' }, planOf(mer, 0, inp)),
+      Object.assign({ id: 'wet', label: '全湿粮 · 维持体重', wetPct: 100, weeks: null, note: '水分摄入高，但按月花费最贵；采用后把湿粮热量占比改成 100%' }, planOf(mer, 100, inp)),
+      Object.assign({ id: 'mix', label: '对半混喂 · 维持体重', wetPct: 50, weeks: null, note: '干湿各占一半热量；采用后把湿粮热量占比改成 50%' }, planOf(mer, 50, inp)),
+      Object.assign({
+        id: 'target', label: wp.direction === 'lose' ? '目标体重方案 · 减到 ' + round(target, 2) + ' kg' : '目标体重方案 · 不排减重',
+        wetPct: num(inp.wetPct), weeks: wp.weeks, note: wp.note,
+      }, planOf(wp.planKcal, num(inp.wetPct), inp)),
+    ];
+
+    /* 分餐量跟随「结论条」用的那套方案（目标方案 = 你当前的湿粮占比），
+       这样页面上「今天喂多少」和「每餐多少」是同一套数。 */
+    const meals = MEALS_BY_AGE[inp.ageStage] || 2;
+    const headPlan = plans[3];
+    const mealsInfo = {
+      count: meals,
+      perMealG: headPlan.dryG / meals,
+      perMealCans: headPlan.cans / meals,
+      note: inp.ageStage === '成年' || inp.ageStage === '老年' ? '成年／老年按 2 餐（可按实际习惯拆成 2–4 餐，总量不变）' : '幼年按 ' + meals + ' 餐',
+    };
+
+    const timeline = buildTimeline(w, target, wp);
+
+    const result = Object.assign(out, {
+      species: sp, speciesLabel: SP_LABEL(sp),
+      rer: R, k: kf.k, kSteps: kf.steps, kBasis: kf.basis, mer: mer,
+      canKcal: canK,
+      bcs: bcs, gap: wp, aggressive: {
+        kcal: 0.8 * rer(bcs.idealKg),
+        rate: (mer - 0.8 * rer(bcs.idealKg)) * 7 / KCAL_PER_KG_FAT / w * 100,
+      },
+      plans: plans, unitCost: uc, meals: mealsInfo, timeline: timeline,
+      headline: headlineOf(plans, wp, bcs, mer, target),
+    });
+    result.checks = runChecks(inp, result);
+    return result;
+  }
+
+  /* 入参可能是 null／字符串／数组（页面初始化读到空控件时就会这样），
+     这里必须自己兜住，否则 compute(null) 会直接抛异常把整页带崩。 */
+  function normalizeInput(inp) {
+    const o = {};
+    const src = (inp && typeof inp === 'object') ? inp : {};
+    FIELDS.forEach(function (f) {
+      if (f === 'neutered') o[f] = (src[f] === true || src[f] === 1 || src[f] === 'true' || src[f] === 'yes');
+      else if (f === 'species' || f === 'ageStage' || f === 'activity') o[f] = (typeof src[f] === 'string' ? src[f] : '');
+      else o[f] = num(src[f]);
+    });
+    return o;
+  }
+
+  function headlineOf(plans, wp, bcs, mer, target) {
+    /* 结论条 = 目标方案那一行（维持方向时它就是「按你当前占比的维持方案」） */
+    const usePlan = plans[3];
+    const isMix = usePlan.wetPct > 0 && usePlan.wetPct < 100;
+    const kcalTarget = wp.direction === 'lose' ? wp.planKcal : mer;
+    /* 只出干粮时就说克数、只出罐头时就说罐数，两边都有才连起来 —— 别写成「0 g 干粮 + 4.2 罐」 */
+    const gTxt = usePlan.dryG >= 0.05 ? round(usePlan.dryG, 1).toFixed(1) + ' g 干粮' : '';
+    const cTxt = usePlan.cans >= 0.005 ? round(usePlan.cans, 2).toFixed(2) + ' 罐' : '';
+    return {
+      kcal: kcalTarget, dryG: usePlan.dryG, cans: usePlan.cans, wetPct: usePlan.wetPct,
+      isMix: isMix,
+      bcsLine: '体况评分 ' + bcs.bcs + '（' + bcs.label + '）：体脂约 ' + round(bcs.bf * 100, 0) + '%，理想体重约 ' + round(bcs.idealKg, 2) + ' kg',
+      weightLine: wp.direction === 'lose'
+        ? '目标 ' + round(target, 2) + ' kg：按 ' + round(wp.actualRate, 3) + ' %/周，约 ' + round(wp.weeks, 1) + ' 周'
+        : '目标体重不小于当前体重：按维持热量喂，不排减重时间线',
+      dryLine: (gTxt && cTxt) ? (gTxt + ' + ' + cTxt) : (gTxt || cTxt || '0 g'),
+    };
+  }
+
+  function buildTimeline(w, target, wp) {
+    if (wp.direction !== 'lose' || !isFinite(wp.weeks) || wp.weeks <= 0) return [];
+    const weeks = wp.weeks;
+    const step = Math.max(1, Math.ceil(weeks / 24));
+    const pts = [];
+    for (let wk = 0; wk < weeks; wk += step) {
+      pts.push({ week: wk, kg: w - (w - target) * (wk / weeks), kcal: wp.planKcal });
+    }
+    pts.push({ week: weeks, kg: target, kcal: wp.planKcal });
+    return pts;
+  }
+
+  /* ─────────────── 引擎自检（页面可见，也被测试调用） ─────────────── */
+
+  function close(a, b, tol) {
+    if (!isFinite(a) || !isFinite(b)) return false;
+    const t = tol == null ? 1e-9 : tol;
+    return Math.abs(a - b) <= t * Math.max(1, Math.abs(a), Math.abs(b));
+  }
+
+  function runChecks(inp, r) {
+    const ck = [];
+    const add = function (name, pass, detail) { ck.push({ name: name, pass: !!pass, detail: detail == null ? '' : String(detail) }); };
+
+    add('热量守恒：干粮热量 + 湿粮热量 = 该方案总热量',
+      r.plans.every(function (p) { return close(p.dryKcal + p.wetKcal, p.kcal, 1e-9); }),
+      r.plans.map(function (p) { return p.id + ':' + round(p.dryKcal + p.wetKcal - p.kcal, 9); }).join(' '));
+
+    add('费用自洽：月花费 = 干粮成本 + 罐头成本',
+      r.plans.every(function (p) { return close(p.dryCost + p.wetCost, p.monthlyCost, 1e-9); }));
+
+    add('全干粮方案罐头数为 0、全湿粮方案干粮为 0',
+      r.plans[0].cans === 0 && r.plans[1].dryG === 0);
+
+    add('所有输出都是有限非负数（无 NaN／Infinity／负数）', (function () {
+      const vals = [];
+      r.plans.forEach(function (p) { vals.push(p.kcal, p.dryKcal, p.wetKcal, p.dryG, p.cans, p.dryCost, p.wetCost, p.monthlyCost); });
+      vals.push(r.rer, r.mer, r.k, r.canKcal, r.unitCost.dryPer1000Kcal, r.unitCost.wetPer1000Kcal, r.meals.perMealG);
+      return vals.every(function (x) { return isFinite(x) && x >= 0; });
+    })());
+
+    add('系数 k 落在 1.0–3.0 之间', r.k >= 1.0 && r.k <= 3.0, 'k=' + r.k);
+
+    add('RER 随体重单调不减（0.5–90 kg 抽样）', (function () {
+      let prev = -Infinity;
+      for (let x = 0.5; x <= 90; x += 0.5) { const v = rer(x); if (!(v > prev)) return false; prev = v; }
+      return true;
+    })());
+
+    add('体况评分 5 时理想体重 = 当前体重（去脂体重守恒的自洽点）',
+      close(bcsInfo({ weight: inp.weight, bcs: 5, targetWeight: inp.targetWeight }).idealKg, num(inp.weight), 1e-12));
+
+    add('湿粮热量占比越高，罐头数不减、干粮克数不增', (function () {
+      const a = planOf(200, 0, inp), b = planOf(200, 50, inp), c = planOf(200, 100, inp);
+      return b.cans >= a.cans - 1e-12 && c.cans >= b.cans - 1e-12 && b.dryG <= a.dryG + 1e-12 && c.dryG <= b.dryG + 1e-12;
+    })());
+
+    add('结论条与目标方案同一套数（克数、罐数、热量一致）', (function () {
+      return close(r.headline.dryG, r.plans[3].dryG, 1e-12) && close(r.headline.cans, r.plans[3].cans, 1e-12) &&
+        close(r.headline.kcal, r.plans[3].kcal, 1e-12) && close(r.meals.perMealG * r.meals.count, r.headline.dryG, 1e-12);
+    })());
+
+    add('减重方案热量不超过维持热量，且不低于下限保护', r.plans[3].kcal <= r.plans[0].kcal + 1e-12 && r.plans[3].kcal >= r.gap.floorKcal - 1e-9,
+      '目标方案 ' + round(r.plans[3].kcal, 4) + ' 维持 ' + round(r.plans[2].kcal, 4) + ' 下限 ' + round(r.gap.floorKcal, 4));
+
+    add('周数与速率自洽：周数 = 需要减的比例 ÷ 实际速率', r.gap.direction !== 'lose' || close(r.gap.weeks * r.gap.actualRate, r.gap.needPct, 1e-9),
+      r.gap.direction === 'lose' ? '' : '非减重方向，不适用');
+
+    add('每餐量 × 餐数 = 每日总量', (function () {
+      return close(r.meals.perMealG * r.meals.count, r.plans[3].dryG, 1e-9) && close(r.meals.perMealCans * r.meals.count, r.plans[3].cans, 1e-9);
+    })());
+
+    add('每 1000 kcal 单价口径：干粮 = 10 × 元每kg ÷ (kcal/100g)',
+      close(r.unitCost.dryPer1000Kcal, 10 * num(inp.dryPricePerKg) / num(inp.dryKcalPer100g), 1e-9));
+
+    add('每 1000 kcal 单价口径：罐头 = (1000 ÷ kcal每g) ÷ 罐净重 × 元每罐',
+      close(r.unitCost.wetPer1000Kcal, (1000 / (num(inp.wetKcalPer100g) / 100)) / num(inp.canNetG) * num(inp.canPrice), 1e-9));
+
+    add('时间线单调下降且落在当前体重与目标体重之间（减重方向）', (function () {
+      if (r.gap.direction !== 'lose') return true;
+      const t = r.timeline;
+      if (t.length < 2) return false;
+      for (let i = 1; i < t.length; i++) if (!(t[i].kg <= t[i - 1].kg + 1e-9)) return false;
+      return close(t[0].kg, num(inp.weight), 1e-9) && close(t[t.length - 1].kg, num(inp.targetWeight), 1e-9);
+    })());
+
+    add('分餐数在 2–4 之间', r.meals.count >= 2 && r.meals.count <= 4, 'count=' + r.meals.count);
+
+    return ck;
+  }
+
+  /* ─────────────── 格式化 ─────────────── */
+
+  function round(x, d) {
+    if (!isFinite(x)) return NaN;
+    const f = Math.pow(10, d == null ? 0 : d);
+    return Math.round(x * f) / f;
+  }
+  function fmt(x, d) {
+    if (x === null || x === undefined || !isFinite(x)) return '—';
+    const n = (d == null ? 2 : d);
+    return Number(x).toFixed(n);
+  }
+  function fmtG(x) { return fmt(x, x >= 100 ? 0 : (x >= 10 ? 1 : 2)) + ' g'; }
+  function fmtCans(x) { return fmt(x, 2) + ' 罐'; }
+  function fmtKcal(x) { return fmt(x, 1) + ' kcal'; }
+  function fmtMoney(x) { return fmt(x, 2) + ' 元'; }
+  function fmtWeeks(x) { return (x == null || !isFinite(x)) ? '—' : fmt(x, 1) + ' 周'; }
+  function fmtPct(x, d) { return fmt(x, d == null ? 2 : d) + '%'; }
+  function fmtKg(x) { return fmt(x, 2) + ' kg'; }
+
+  return {
+    VERSION: VERSION, RER_K: RER_K, BW_EXP: BW_EXP, KCAL_PER_KG_FAT: KCAL_PER_KG_FAT,
+    IDEAL_BF: IDEAL_BF, BAND: BAND, BCS_BF: BCS_BF, BCS_LABEL: BCS_LABEL,
+    ADULT_BASE: ADULT_BASE, YOUNG_K: YOUNG_K, RATE: RATE, SAFE_MAX: SAFE_MAX, SAFE_MIN: SAFE_MIN,
+    LIMITS: LIMITS, MEALS_BY_AGE: MEALS_BY_AGE, SPECIES: SPECIES, SPECIES_LABEL: SPECIES_LABEL,
+    AGE_STAGES: AGE_STAGES, ACTIVITIES: ACTIVITIES, ACTIVITY_LABEL: ACTIVITY_LABEL, FIELDS: FIELDS,
+    DEFAULTS: DEFAULTS,
+    defaults: defaults, scenarios: scenarios,
+    rer: rer, kFactor: kFactor, merKcal: merKcal, bcsInfo: bcsInfo, canKcalOf: canKcalOf,
+    planOf: planOf, weightPlan: weightPlan, unitCostOf: unitCostOf, validate: validate,
+    compute: compute, runChecks: runChecks, normalizeInput: normalizeInput, buildTimeline: buildTimeline,
+    round: round, close: close,
+    fmt: fmt, fmtG: fmtG, fmtCans: fmtCans, fmtKcal: fmtKcal, fmtMoney: fmtMoney,
+    fmtWeeks: fmtWeeks, fmtPct: fmtPct, fmtKg: fmtKg,
+  };
+});
+
+</script>
+<script>
+/* 粮喂多了 · 界面层（只做读写 DOM 与排版，所有数字都来自 AppCore.compute） */
+(function () {
+  'use strict';
+  const A = window.AppCore;
+  const SLUG = 'pet-portion';
+  const VERSION = '1.0.0';
+  const STORE_KEY = 'pet-portion::v1';
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const G = (x) => A.fmtG(x);
+  const KC = (x) => A.fmtKcal(x);
+  const MONEY = (x) => A.fmtMoney(x);
+
+  const IDS = {
+    species: 'p-species', weight: 'p-weight', bcs: 'p-bcs', ageStage: 'p-age', neutered: 'p-neuter',
+    activity: 'p-activity', dryKcalPer100g: 'p-drykcal', dryPricePerKg: 'p-dryprice',
+    wetKcalPer100g: 'p-wetkcal', canNetG: 'p-can', canPrice: 'p-canprice',
+    wetPct: 'p-wetpct', targetWeight: 'p-target',
+  };
+  const NUM_FIELDS = ['weight', 'bcs', 'dryKcalPer100g', 'dryPricePerKg', 'wetKcalPer100g', 'canNetG', 'canPrice', 'wetPct', 'targetWeight'];
+
+  const BOUNDS = [
+    '算的是热量：先用 RER = 70 × 体重^0.75 得到静息需求，再乘一个「系数」得到维持需求。系数按物种、年龄阶段、是否绝育、活动量查表，取自公开兽医营养资料里常见的区间中值 —— 它是设计选择，不是唯一正确答案。',
+    '体况评分到体脂率是分档表（1→5%、5→20%、7→35%、9→55%），理想体脂率按 20% 算，理想体重由「去脂体重不变」反推。评分靠手感，打偏了结论就偏。',
+    '粮只看两个数：热量密度与价格。不评价配方、蛋白来源、适口性、品牌，也不判断某种粮适不适合你家这只。',
+    '减重方案只排一个方向：按公开口径的常见速率（猫 0.75、狗 1.5 %体重/周）算出每日能量缺口，再乘下限保护（不低于 0.8×RER(理想体重)，也不低于维持热量的 60%），触底就按触底热量重算速率。目标体重不小于当前体重时不出时间线。',
+    '不处理：疾病（肾病、糖尿病、胰腺炎、甲亢等）、处方粮、怀孕哺乳期、需要个体化方案的肥胖症治疗、生骨肉/自制粮的营养均衡性判断 —— 这些都需要兽医面诊，不是一道算术题。',
+    '1 kg 体脂按 7700 kcal 折算，这是公开口径里常用的近似值；实际掉重不会完全来自脂肪，所以周数只能当量级参考。',
+    '价格、热量密度、体重都是你自己填的；填的是开封后的市售价与包装标注热量，算出来的月花费才有可比性。',
+  ];
+
+  /* ── 读写输入 ── */
+  function readInputs() {
+    const o = {};
+    o.species = $('p-species') ? $('p-species').value : 'cat';
+    o.ageStage = $('p-age') ? $('p-age').value : '成年';
+    o.activity = $('p-activity') ? $('p-activity').value : 'mid';
+    o.neutered = ($('p-neuter') ? $('p-neuter').value : 'yes') === 'yes';
+    NUM_FIELDS.forEach(function (f) {
+      const el = $(IDS[f]);
+      if (!el || el.value === '') { o[f] = NaN; return; }
+      const n = Number(el.value);
+      o[f] = isFinite(n) ? n : NaN;
+    });
+    return o;
+  }
+
+  function writeInputs(inp) {
+    const src = inp || {};
+    if ($('p-species')) $('p-species').value = (A.SPECIES.indexOf(src.species) >= 0 ? src.species : 'cat');
+    if ($('p-age')) $('p-age').value = (A.AGE_STAGES.indexOf(src.ageStage) >= 0 ? src.ageStage : '成年');
+    if ($('p-activity')) $('p-activity').value = (A.ACTIVITIES.indexOf(src.activity) >= 0 ? src.activity : 'mid');
+    if ($('p-neuter')) $('p-neuter').value = src.neutered === false ? 'no' : 'yes';
+    NUM_FIELDS.forEach(function (f) {
+      const el = $(IDS[f]);
+      if (!el) return;
+      const v = src[f];
+      el.value = (v === null || v === undefined || (typeof v === 'number' && !isFinite(v))) ? '' : String(v);
+    });
+  }
+
+  /* ── 渲染 ── */
+  function render() {
+    const inp = readInputs();
+    const r = A.compute(inp);
+    window.__app.last = r;
+    paint(r);
+    try { autoSave(inp); } catch (e) { /* 隐私模式下 localStorage 可能不可用，不影响计算 */ }
+    return r;
+  }
+
+  function paint(r) {
+    /* 报错与提示 */
+    const eb = $('errbox'), wb = $('warnbox');
+    if (eb) {
+      if (r.ok) { eb.classList.add('hidden'); eb.innerHTML = ''; }
+      else {
+        eb.classList.remove('hidden');
+        eb.innerHTML = '<b>这几处填得不对，先改一下：</b><ul>' +
+          r.errors.map((e) => '<li>' + esc((e.field === '_' ? '' : fieldLabel(e.field) + '：')) + esc(e.msg) + '</li>').join('') + '</ul>';
+      }
+    }
+    if (wb) {
+      if (!r.warnings.length) { wb.classList.add('hidden'); wb.innerHTML = ''; }
+      else {
+        wb.classList.remove('hidden');
+        wb.innerHTML = '<b>算出来了，但有 ' + r.warnings.length + ' 处要提醒：</b><ul>' +
+          r.warnings.map((w) => '<li>' + esc(w.msg) + '</li>').join('') + '</ul>';
+      }
+    }
+    const cc = $('conclusion');
+    if (cc) cc.classList.remove('invalid');
+    if (!r.ok) { blankOut(); return; }
+
+    /* 结论条 */
+    const h = r.headline;
+    set('out-dryline', h.dryLine);
+    set('out-kcal', KC(h.kcal));
+    set('out-meals', r.meals.count + ' 餐 × ' + G(r.meals.perMealG) + (r.meals.perMealCans > 0 ? ' + ' + A.fmtCans(r.meals.perMealCans) : ''));
+    set('out-cost', MONEY(r.plans[3].monthlyCost) + '/月');
+    set('out-mealsnote', r.meals.note);
+    set('out-bcsline', h.bcsLine);
+    set('out-weightline', h.weightLine);
+    set('out-rateline', '按每 1000 kcal 比：干粮 ' + A.fmtMoney(r.unitCost.dryPer1000Kcal) + '、罐头 ' + A.fmtMoney(r.unitCost.wetPer1000Kcal) +
+      (isFinite(r.unitCost.ratio) && r.unitCost.ratio > 0 ? '（罐头是干粮的 ' + A.fmt(r.unitCost.ratio, 2) + ' 倍）' : ''));
+    set('concl-tag', r.speciesLabel + ' ' + A.fmtKg(r.input.weight) + ' · 体况 ' + r.bcs.bcs + ' / 9 · ' + r.input.ageStage);
+
+    /* 对照表 */
+    const tb = $('t-plan-body');
+    if (tb) {
+      tb.innerHTML = r.plans.map(function (p, i) {
+        const isHead = i === 3;
+        const adoptLabel = p.id === 'target' ? '把目标体重写成理想体重' : '把湿粮占比改成 ' + p.wetPct + '%';
+        return '<tr class="' + (isHead ? 'pick' : '') + '">' +
+          '<td class="name" data-l="方案">' + esc(p.label) + (isHead ? '<span class="badge">结论条用这套</span>' : '') + '</td>' +
+          '<td class="num" data-l="每日热量">' + KC(p.kcal) + '</td>' +
+          '<td class="num" data-l="干粮">' + (p.dryG > 0 ? G(p.dryG) : '—') + '</td>' +
+          '<td class="num" data-l="罐头">' + (p.cans > 0 ? A.fmtCans(p.cans) : '—') + '</td>' +
+          '<td class="num" data-l="每月粮钱">' + MONEY(p.monthlyCost) + '</td>' +
+          '<td class="num" data-l="达标周数">' + A.fmtWeeks(p.weeks) + '</td>' +
+          '<td class="note" data-l="说明">' + esc(p.note) +
+            '<div class="adopt"><button class="sm" data-adopt="' + p.id + '" title="' + esc(adoptLabel) + '">采用</button></div></td>' +
+          '</tr>';
+      }).join('');
+      Array.prototype.forEach.call(tb.querySelectorAll('button[data-adopt]'), function (b) {
+        b.addEventListener('click', function () { adopt(b.getAttribute('data-adopt')); });
+      });
+    }
+
+    /* 体况诊断 */
+    const bb = $('bcs-body');
+    if (bb) {
+      const b = r.bcs;
+      const diff = r.input.weight - b.idealKg;
+      bb.innerHTML = [
+        kv('体况评分', b.bcs + ' / 9（' + b.label + '）'),
+        kv('体脂率（分档）', A.fmtPct(b.bf * 100, 0)),
+        kv('去脂体重', A.fmtKg(b.leanKg)),
+        kv('理想体重', A.fmtKg(b.idealKg)),
+        kv('理想带宽（±15%）', A.fmtKg(b.idealLo) + ' – ' + A.fmtKg(b.idealHi)),
+        kv('当前比理想', (diff > 0.005 ? '重 ' + A.fmtKg(diff) : (diff < -0.005 ? '轻 ' + A.fmtKg(-diff) : '基本一致'))),
+      ].join('');
+    }
+
+    /* 「少喂点」口径对照 */
+    const ab = $('aggr-body');
+    if (ab) {
+      const maxRate = A.SAFE_MAX[r.species];
+      const over = r.aggressive.rate > maxRate;
+      ab.innerHTML = [
+        kv('0.8 × RER(理想体重)', KC(r.aggressive.kcal)),
+        kv('折成掉重速率', A.fmt(r.aggressive.rate, 2) + ' %/周'),
+        kv('这个物种的安全上限', A.fmt(maxRate, 2) + ' %/周'),
+        kv('判定', over ? '超了 ' + A.fmt(r.aggressive.rate - maxRate, 2) + ' 个百分点，别按这个数喂' : '没超上限，仍在常见区间里'),
+      ].join('');
+    }
+
+    /* 时间线 */
+    const tl = $('tl-body');
+    if (tl) {
+      if (!r.timeline.length) {
+        tl.innerHTML = '<p class="hint" style="font-size:12.5px;color:var(--ink3);margin:0">' +
+          (r.gap.direction === 'lose' ? '算不出时间线。' : '目标体重不小于当前体重，本工具不排减重时间线（增重请按兽医建议）。') + '</p>';
+        set('tl-tag', '');
+      } else {
+        tl.innerHTML = '<div class="tblwrap"><table class="tl"><thead><tr><th>第几周</th><th>体重</th><th>该周每日热量</th></tr></thead><tbody>' +
+          r.timeline.map(function (p) {
+            const isInt = Math.abs(p.week - Math.round(p.week)) < 1e-9;
+            const w = p.week < 0.05 ? '起点' : '第 ' + (isInt ? String(Math.round(p.week)) : A.fmt(p.week, 1)) + ' 周';
+            return '<tr><td>' + w + '</td><td>' + A.fmtKg(p.kg) + '</td><td>' + KC(p.kcal) + '</td></tr>';
+          }).join('') +
+          '</tbody></table></div>';
+        set('tl-tag', '共 ' + A.fmtWeeks(r.gap.weeks) + ' · 按 ' + A.fmt(r.gap.actualRate, 2) + ' %/周');
+      }
+    }
+
+    /* 自检 */
+    const cb = $('check-body');
+    if (cb) {
+      cb.innerHTML = r.checks.map((c) => '<li class="' + (c.pass ? 'ok' : 'no') + '"><span class="m">' + (c.pass ? '✓' : '✗') + '</span><span>' + esc(c.name) +
+        (c.pass || !c.detail ? '' : '｜' + esc(c.detail)) + '</span></li>').join('');
+      const bad = r.checks.filter((c) => !c.pass).length;
+      set('check-tag', (r.checks.length - bad) + ' / ' + r.checks.length + ' 通过' + (bad ? '（有 ' + bad + ' 条变红）' : ''));
+    }
+
+    const bd = $('bounds-body');
+    if (bd) bd.innerHTML = '<ul class="note-list">' + BOUNDS.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>';
+    set('dl-hint', '四种导出都会落到你的下载目录：' + SLUG + '-导出.csv / .md / 结果卡.png / -备份.json');
+  }
+
+  function fieldLabel(f) {
+    const m = {
+      species: '猫还是狗', weight: '当前体重', bcs: '体况评分', ageStage: '年龄阶段', neutered: '是否绝育',
+      activity: '活动量', dryKcalPer100g: '干粮热量密度', dryPricePerKg: '干粮价格', wetKcalPer100g: '罐头热量密度',
+      canNetG: '罐净重', canPrice: '罐头价格', wetPct: '湿粮热量占比', targetWeight: '目标体重',
+    };
+    return m[f] || f;
+  }
+  function kv(k, v) { return '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>'; }
+  function set(id, txt) { const el = $(id); if (el) el.textContent = txt; }
+
+  const BAD = '输入有误，先改上面的字段。';
+  function blankOut() {
+    /* 非法输入时不要在结论条里留一排「—」：一句话说清，并把四个结果区都换成同一句占位 */
+    const cc = $('conclusion');
+    if (cc) cc.classList.add('invalid');
+    ['concl-tag', 'tl-tag', 'check-tag'].forEach((id) => set(id, ''));
+    set('out-dryline', BAD);
+    ['out-kcal', 'out-meals', 'out-cost', 'out-mealsnote', 'out-bcsline', 'out-weightline', 'out-rateline'].forEach((id) => set(id, ''));
+    const tb = $('t-plan-body');
+    if (tb) tb.innerHTML = '<tr><td class="note" colspan="7">' + BAD + '</td></tr>';
+    set('plan-hint', '');
+    const bd = $('bcs-body');
+    if (bd) bd.innerHTML = kv('状态', BAD);
+    const ab = $('aggr-body');
+    if (ab) ab.innerHTML = kv('状态', BAD);
+    const cb = $('check-body');
+    if (cb) cb.innerHTML = '<li class="no"><span class="m">✗</span><span>' + BAD + '未运行自检</span></li>';
+    const tl = $('tl-body');
+    if (tl) tl.innerHTML = '<p class="hint" style="font-size:12.5px;color:var(--ink3);margin:0">' + BAD + '</p>';
+  }
+
+  /* ── 「采用」：把这一套写回输入 ── */
+  function adopt(id) {
+    const r = window.__app.last;
+    if (!r || !r.ok) return;
+    const inp = readInputs();
+    if (id === 'dry') inp.wetPct = 0;
+    else if (id === 'wet') inp.wetPct = 100;
+    else if (id === 'mix') inp.wetPct = 50;
+    else if (id === 'target') inp.targetWeight = A.round(r.bcs.idealKg, 2);
+    writeInputs(inp);
+    render();
+  }
+
+  /* ── 存档 ── */
+  function autoSave(inp) {
+    if (!window.localStorage) return;
+    localStorage.setItem(STORE_KEY, JSON.stringify({ version: VERSION, savedAt: new Date().toISOString(), input: inp }));
+  }
+  function safeGet() {
+    try {
+      if (!window.localStorage) return null;
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      return (o && typeof o === 'object' && o.input) ? o : null;
+    } catch (e) { return null; }
+  }
+  function saveNow() {
+    autoSave(readInputs());
+    set('save-hint', '已保存到本机（' + new Date().toLocaleString('zh-CN') + '），刷新或下次打开会自动恢复。');
+  }
+  function clearStore() {
+    try { localStorage.removeItem(STORE_KEY); } catch (e) { /* 忽略 */ }
+    writeInputs(A.defaults());
+    render();
+    set('save-hint', '已清掉本机存档，回到示例默认值。');
+  }
+
+  /* ── 导出 ── */
+  function download(name, text, type) {
+    const blob = new Blob([text], { type: type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    return blob.size;
+  }
+
+  function csv() {
+    const r = window.__app.last;
+    const L = [];
+    /* 正文里不写导出时间戳：这样同一批输入两次导出的 CSV 可以逐字节比对（时间见 JSON 备份里的 savedAt） */
+    L.push('粮喂多了 · 导出');
+    L.push('说明,默认数据是虚构示例；本文件所有数字都由页面同一次计算输出，未做二次估算；导出时间见同批 JSON 备份的 savedAt');
+    L.push('');
+    L.push('输入项,值,单位');
+    const units = { species: '', weight: 'kg', bcs: '1-9', ageStage: '', neutered: '', activity: '', dryKcalPer100g: 'kcal/100g', dryPricePerKg: '元/kg', wetKcalPer100g: 'kcal/100g', canNetG: 'g', canPrice: '元/罐', wetPct: '%热量', targetWeight: 'kg' };
+    A.FIELDS.forEach(function (f) {
+      const v = f === 'neutered' ? (r.input[f] ? '是' : '否') : r.input[f];
+      L.push([f, v, units[f] || ''].join(','));
+    });
+    if (r.ok) {
+      L.push('');
+      L.push('关键结果,值,单位');
+      L.push(['静息需求 RER', A.fmt(r.rer, 4), 'kcal/日'].join(','));
+      L.push(['系数 k', r.k, ''].join(','));
+      L.push(['维持需求 MER', A.fmt(r.mer, 4), 'kcal/日'].join(','));
+      L.push(['体脂率', A.fmt(r.bcs.bf * 100, 1), '%'].join(','));
+      L.push(['去脂体重', A.fmt(r.bcs.leanKg, 4), 'kg'].join(','));
+      L.push(['理想体重', A.fmt(r.bcs.idealKg, 4), 'kg'].join(','));
+      L.push(['每日能量缺口', A.fmt(r.gap.gapKcal, 4), 'kcal'].join(','));
+      L.push(['目标方案热量', A.fmt(r.gap.planKcal, 4), 'kcal/日'].join(','));
+      L.push(['实际掉重速率', A.fmt(r.gap.actualRate, 4), '%/周'].join(','));
+      L.push(['到达目标需要', r.gap.weeks == null ? '—' : A.fmt(r.gap.weeks, 2), '周'].join(','));
+      L.push('');
+      L.push('方案,湿粮热量占比%,每日热量kcal,干粮g,罐头数,每月粮钱元,达标周数');
+      r.plans.forEach(function (p) {
+        L.push([p.label, p.wetPct, A.fmt(p.kcal, 4), A.fmt(p.dryG, 4), A.fmt(p.cans, 4), A.fmt(p.monthlyCost, 4), p.weeks == null ? '' : A.fmt(p.weeks, 2)].join(','));
+      });
+      L.push('');
+      L.push('单价口径,元/1000kcal');
+      L.push(['干粮', A.fmt(r.unitCost.dryPer1000Kcal, 4)].join(','));
+      L.push(['罐头', A.fmt(r.unitCost.wetPer1000Kcal, 4)].join(','));
+      L.push(['倍数（罐头/干粮）', isFinite(r.unitCost.ratio) ? A.fmt(r.unitCost.ratio, 4) : '—'].join(','));
+      L.push('');
+      L.push('引擎自检,' + r.checks.filter((c) => c.pass).length + '/' + r.checks.length + ' 通过');
+      r.checks.forEach((c) => L.push([(c.pass ? 'PASS' : 'FAIL'), c.name].join(',')));
+      if (r.warnings.length) {
+        L.push('');
+        L.push('提示');
+        r.warnings.forEach((w) => L.push([w.code, w.msg].join(',')));
+      }
+    } else {
+      L.push('');
+      L.push('输入有误，未产生结果');
+      r.errors.forEach((e) => L.push([e.field, e.msg].join(',')));
+    }
+    return download(SLUG + '-导出.csv', '\ufeff' + L.join('\r\n'), 'text/csv;charset=utf-8');
+  }
+
+  function md() {
+    const r = window.__app.last;
+    const L = [];
+    L.push('# 粮喂多了 · 结果');
+    L.push('');
+    L.push('> 默认数据是虚构示例；下面每个数字都来自页面同一次计算输出。导出时间见同批 JSON 备份的 savedAt。');
+    L.push('');
+    if (!r || !r.ok) {
+      L.push('## 当前输入有误，未产生结果');
+      (r ? r.errors : []).forEach((e) => L.push('- ' + e.msg));
+      return download(SLUG + '-导出.md', L.join('\n'), 'text/markdown;charset=utf-8');
+    }
+    const h = r.headline;
+    L.push('## 结论');
+    L.push('');
+    L.push('- 每天喂：**' + h.dryLine + '**');
+    L.push('- 每日热量：**' + KC(h.kcal) + '**；分餐：' + r.meals.count + ' 餐 × ' + G(r.meals.perMealG) + (r.meals.perMealCans > 0 ? ' + ' + A.fmtCans(r.meals.perMealCans) : ''));
+    L.push('- 每月粮钱：**' + MONEY(r.plans[3].monthlyCost) + '**');
+    L.push('- ' + h.bcsLine);
+    L.push('- ' + h.weightLine);
+    L.push('');
+    L.push('## 四套喂法对照');
+    L.push('');
+    L.push('| 方案 | 湿粮热量占比 | 每日热量 | 干粮 | 罐头 | 每月粮钱 | 达标周数 |');
+    L.push('|---|---|---|---|---|---|---|');
+    r.plans.forEach(function (p) {
+      L.push('| ' + p.label + ' | ' + p.wetPct + '% | ' + KC(p.kcal) + ' | ' + (p.dryG > 0 ? G(p.dryG) : '—') + ' | ' + (p.cans > 0 ? A.fmtCans(p.cans) : '—') + ' | ' + MONEY(p.monthlyCost) + ' | ' + A.fmtWeeks(p.weeks) + ' |');
+    });
+    L.push('');
+    L.push('## 体况与关键中间量');
+    L.push('');
+    L.push('- 体况评分：' + r.bcs.bcs + ' / 9（' + r.bcs.label + '），体脂率（分档）' + A.fmtPct(r.bcs.bf * 100, 0));
+    L.push('- 去脂体重 ' + A.fmtKg(r.bcs.leanKg) + '；理想体重 ' + A.fmtKg(r.bcs.idealKg) + '（带宽 ' + A.fmtKg(r.bcs.idealLo) + ' – ' + A.fmtKg(r.bcs.idealHi) + '）');
+    L.push('- RER = 70 × ' + A.fmtKg(r.input.weight) + '^0.75 = ' + KC(r.rer) + '；系数 k = ' + r.k + '；MER = ' + KC(r.mer));
+    L.push('- 干湿换算：干粮 ' + A.fmt(r.input.dryKcalPer100g, 0) + ' kcal/100g → ' + A.fmt(r.input.dryKcalPer100g / 100, 2) + ' kcal/g；罐头 ' + A.fmt(r.canKcal, 2) + ' kcal/罐');
+    L.push('- 每 1000 kcal 单价：干粮 ' + A.fmtMoney(r.unitCost.dryPer1000Kcal) + '、罐头 ' + A.fmtMoney(r.unitCost.wetPer1000Kcal) + (isFinite(r.unitCost.ratio) ? '（' + A.fmt(r.unitCost.ratio, 2) + ' 倍）' : ''));
+    L.push('');
+    L.push('## 减重时间线');
+    L.push('');
+    if (r.timeline.length) {
+      L.push('| 周 | 体重 | 该周每日热量 |');
+      L.push('|---|---|---|');
+      r.timeline.forEach((p) => L.push('| ' + (p.week < 0.05 ? '起点' : A.fmt(p.week, 1)) + ' | ' + A.fmtKg(p.kg) + ' | ' + KC(p.kcal) + ' |'));
+    } else {
+      L.push('目标体重不小于当前体重，本工具不排减重时间线。');
+    }
+    L.push('');
+    L.push('## 引擎自检（' + r.checks.filter((c) => c.pass).length + '/' + r.checks.length + '）');
+    L.push('');
+    r.checks.forEach((c) => L.push('- ' + (c.pass ? '✓' : '✗') + ' ' + c.name + (c.pass || !c.detail ? '' : '｜' + c.detail)));
+    if (r.warnings.length) {
+      L.push('');
+      L.push('## 提示');
+      L.push('');
+      r.warnings.forEach((w) => L.push('- ' + w.msg));
+    }
+    L.push('');
+    L.push('## 口径与不处理的情形');
+    L.push('');
+    BOUNDS.forEach((b) => L.push('- ' + b));
+    L.push('');
+    L.push('本工具只做算术，不做诊断、不开处方、不评价粮的品质。');
+    return download(SLUG + '-导出.md', L.join('\n'), 'text/markdown;charset=utf-8');
+  }
+
+  function jsonBackup() {
+    const inp = readInputs();
+    const r = window.__app.last;
+    const payload = {
+      app: SLUG, version: VERSION, savedAt: new Date().toISOString(),
+      note: '输入 + 关键结果备份；默认数据是虚构示例',
+      input: inp,
+      result: r && r.ok ? {
+        rer: r.rer, k: r.k, mer: r.mer, bcs: r.bcs, gap: r.gap, plans: r.plans,
+        unitCost: r.unitCost, meals: r.meals, headline: r.headline,
+        checksPass: r.checks.filter((c) => c.pass).length, checksTotal: r.checks.length,
+        warnings: r.warnings,
+      } : { ok: false, errors: (r ? r.errors : []) },
+    };
+    return download(SLUG + '-备份.json', JSON.stringify(payload, null, 2), 'application/json');
+  }
+
+  function png() {
+    const r = window.__app.last;
+    const W = 1080, H = 1350;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#f5f2ea'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#fffefb'; g.fillRect(48, 48, W - 96, H - 96);
+    g.strokeStyle = '#dbe2db'; g.lineWidth = 2; g.strokeRect(48, 48, W - 96, H - 96);
+    let y = 118;
+    g.fillStyle = '#1f2e28'; g.font = 'bold 52px -apple-system,"PingFang SC",sans-serif';
+    g.fillText('粮喂多了', 88, y);
+    y += 44;
+    g.fillStyle = '#7c8a82'; g.font = '26px -apple-system,"PingFang SC",sans-serif';
+    g.fillText('猫狗每天喂多少 · 四套喂法对照', 88, y);
+    y += 22;
+    g.strokeStyle = '#1f2e28'; g.lineWidth = 3; g.beginPath(); g.moveTo(88, y); g.lineTo(W - 88, y); g.stroke();
+    y += 56;
+
+    if (!r || !r.ok) {
+      g.fillStyle = '#8d1f1f'; g.font = '30px -apple-system,"PingFang SC",sans-serif';
+      g.fillText('当前输入有误，未产生结果', 88, y);
+    } else {
+      const h = r.headline;
+      g.fillStyle = '#49584f'; g.font = '28px -apple-system,"PingFang SC",sans-serif';
+      g.fillText('结论：今天喂', 88, y);
+      y += 56;
+      g.fillStyle = '#154c34'; g.font = 'bold 62px -apple-system,"PingFang SC",sans-serif';
+      g.fillText(h.dryLine, 88, y);
+      y += 62;
+      g.fillStyle = '#49584f'; g.font = '28px -apple-system,"PingFang SC",sans-serif';
+      g.fillText('每日热量 ' + KC(h.kcal) + '　｜　分餐 ' + r.meals.count + ' 餐 × ' + G(r.meals.perMealG) + '　｜　每月粮钱 ' + MONEY(r.plans[3].monthlyCost), 88, y);
+      y += 44;
+      g.fillStyle = '#7c8a82'; g.font = '25px -apple-system,"PingFang SC",sans-serif';
+      y = wrap(g, h.bcsLine, 88, y, W - 176, 34);
+      y = wrap(g, h.weightLine, 88, y, W - 176, 34);
+      y += 26;
+
+      /* 对照表 */
+      const cols = [88, 460, 590, 720, 850, 1000];
+      const heads = ['方案', '每日热量', '干粮', '罐头', '每月', '周数'];
+      g.fillStyle = '#7c8a82'; g.font = '24px -apple-system,"PingFang SC",sans-serif';
+      heads.forEach((t, i) => g.fillText(t, cols[i], y));
+      y += 16;
+      g.strokeStyle = '#dbe2db'; g.beginPath(); g.moveTo(88, y); g.lineTo(W - 88, y); g.stroke();
+      y += 38;
+      r.plans.forEach(function (p, i) {
+        if (i === 3) { g.fillStyle = '#f4f9f5'; g.fillRect(80, y - 30, W - 160, 46); }
+        g.fillStyle = i === 3 ? '#154c34' : '#1f2e28';
+        g.font = (i === 3 ? 'bold ' : '') + '26px -apple-system,"PingFang SC",sans-serif';
+        g.fillText(clip(g, p.label, 350), cols[0], y);
+        g.font = '26px -apple-system,"PingFang SC",sans-serif';
+        g.fillText(KC(p.kcal), cols[1], y);
+        g.fillText(p.dryG > 0 ? A.fmt(p.dryG, 0) + ' g' : '—', cols[2], y);
+        g.fillText(p.cans > 0 ? A.fmt(p.cans, 2) : '—', cols[3], y);
+        g.fillText(A.fmt(p.monthlyCost, 0) + ' 元', cols[4], y);
+        g.fillText(p.weeks == null ? '—' : A.fmt(p.weeks, 1) + ' 周', cols[5], y);
+        y += 46;
+      });
+      y += 20;
+      g.strokeStyle = '#dbe2db'; g.beginPath(); g.moveTo(88, y); g.lineTo(W - 88, y); g.stroke();
+      y += 46;
+      g.fillStyle = '#49584f'; g.font = '26px -apple-system,"PingFang SC",sans-serif';
+      y = wrap(g, '每 1000 kcal 单价：干粮 ' + A.fmtMoney(r.unitCost.dryPer1000Kcal) + '、罐头 ' + A.fmtMoney(r.unitCost.wetPer1000Kcal) +
+        (isFinite(r.unitCost.ratio) ? '（' + A.fmt(r.unitCost.ratio, 1) + ' 倍）' : ''), 88, y, W - 176, 36);
+      y = wrap(g, '到目标体重约 ' + A.fmtWeeks(r.gap.weeks) + '（按 ' + A.fmt(r.gap.actualRate, 2) + ' %/周）', 88, y, W - 176, 36);
+      y = wrap(g, '体况 ' + r.bcs.bcs + '/9 · 体脂（分档）' + A.fmtPct(r.bcs.bf * 100, 0) + ' · 理想体重 ' + A.fmtKg(r.bcs.idealKg), 88, y, W - 176, 36);
+      if (r.warnings.length) {
+        y += 12;
+        g.fillStyle = '#a2610c'; g.font = '24px -apple-system,"PingFang SC",sans-serif';
+        r.warnings.slice(0, 3).forEach((w) => { y = wrap(g, '提示：' + w.msg, 88, y, W - 176, 32); });
+      }
+    }
+    g.fillStyle = '#7c8a82'; g.font = '22px -apple-system,"PingFang SC",sans-serif';
+    wrap(g, '默认数据是虚构示例；本卡片所有数字来自同一次计算。不构成诊疗建议。', 88, H - 116, W - 176, 30);
+    g.fillStyle = '#a8b3ac'; g.font = '20px -apple-system,"PingFang SC",sans-serif';
+    g.fillText('粮喂多了 v' + VERSION + '　本机生成', 88, H - 76);
+
+    return download(SLUG + '-结果卡.png', dataUrlToBlob(cv.toDataURL('image/png')), 'image/png');
+  }
+  function clip(g, text, maxW) {
+    let t = String(text);
+    if (g.measureText(t).width <= maxW) return t;
+    while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+    return t + '…';
+  }
+  function wrap(g, text, x, y, maxW, lh) {
+    const t = String(text);
+    let line = '';
+    for (let i = 0; i < t.length; i++) {
+      const test = line + t[i];
+      if (g.measureText(test).width > maxW && line) { g.fillText(line, x, y); y += lh; line = t[i]; }
+      else line = test;
+    }
+    if (line) { g.fillText(line, x, y); y += lh; }
+    return y;
+  }
+  function dataUrlToBlob(url) {
+    const parts = url.split(',');
+    const bin = atob(parts[1]);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: 'image/png' });
+  }
+
+  /* ── 初始化 ── */
+  function buildSelects() {
+    const ages = $('p-age');
+    if (ages) ages.innerHTML = A.AGE_STAGES.map((a) => '<option value="' + a + '">' + a + '</option>').join('');
+    const acts = $('p-activity');
+    if (acts) acts.innerHTML = A.ACTIVITIES.map((a) => '<option value="' + a + '">' + esc(A.ACTIVITY_LABEL[a]) + '</option>').join('');
+    const bcs = $('p-bcs');
+    if (bcs) {
+      let html = '';
+      for (let i = 1; i <= 9; i++) html += '<option value="' + i + '">' + i + '（' + A.BCS_LABEL[i] + '）</option>';
+      bcs.innerHTML = html;
+    }
+  }
+  function attach() {
+    Object.keys(IDS).forEach(function (k) {
+      const el = $(IDS[k]);
+      if (!el) return;
+      /* 必须包一层：直接把 render 当监听器会把事件对象当成参数传进去（批次 59 的教训） */
+      el.addEventListener('input', function () { set('save-hint', ''); render(); });
+      el.addEventListener('change', function () { set('save-hint', ''); render(); });
+    });
+    const bind = function (id, fn) { const el = $(id); if (el) el.addEventListener('click', function () { fn(); }); };
+    bind('b-default', function () { writeInputs(A.defaults()); render(); set('save-hint', '已恢复示例默认值。'); });
+    A.scenarios().forEach(function (s, i) {
+      bind(['b-s-demo', 'b-s-lean', 'b-s-dog'][i], function () { writeInputs(s.input); render(); set('save-hint', '已切到：' + s.label + '（虚构示例）'); });
+    });
+    bind('b-save', saveNow);
+    bind('b-clear', clearStore);
+    bind('b-csv', csv);
+    bind('b-md', md);
+    bind('b-png', png);
+    bind('b-json', jsonBackup);
+  }
+
+  function init() {
+    buildSelects();
+    attach();
+    const saved = safeGet();
+    if (saved) {
+      const merged = Object.assign(A.defaults(), saved.input || {});
+      if (A.compute(merged).ok) { writeInputs(merged); set('save-hint', '已从本机存档恢复（存于 ' + String(saved.savedAt || '').replace('T', ' ').slice(0, 19) + '）。'); }
+      else { writeInputs(A.defaults()); set('save-hint', '本机存档里的数已经不合法，已回到示例默认值。'); }
+    } else {
+      writeInputs(A.defaults());
+      set('save-hint', '默认是虚构示例；改动会自动存到本机，刷新后还在。');
+    }
+    const bd = $('bounds-body');
+    if (bd) bd.innerHTML = '<ul class="note-list">' + BOUNDS.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>';
+    render();
+  }
+
+  window.__app = {
+    readInputs: readInputs, writeInputs: writeInputs, render: render, adopt: adopt,
+    csv: csv, md: md, jsonBackup: jsonBackup, png: png, init: init, last: null,
+    bounds: BOUNDS, version: VERSION,
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+</script>
+</body>
+</html>
